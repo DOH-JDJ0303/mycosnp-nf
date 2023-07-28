@@ -13,6 +13,6 @@ process WAPHL_REPORT {
 
     script:
     """
-    Rscript -e "rmarkdown::render('waphl-mycosnp-report.Rmd')"
+    bash waphl-mycosnp-report.sh
     """
 }

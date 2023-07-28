@@ -394,10 +394,30 @@ workflow MYCOSNP {
     // MODULE: WAPHL Report
     //
 
-    waphl_report_files = tuple(QC_REPORTSHEET.out.qc_reportsheet, CREATE_PHYLOGENY.out.fasttree. CREATE_PHYLOGENY.out.rapidnj, CREATE_PHYLOGENY.out.quicksnp, SNPDISTS.out.tsv, SNPEFF.out.report)
+    // Create paths to the output files included in the report. This was easier than hunting down their outputs from previous processes/subworkflows.
+    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt"
+    qc_report_file = file(qc_report_path).exists() ? path(qc_report_path) : "$projectDir/CHANGELOG.md"
+
+    fasttree_path  = params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh"
+    fasttree_file = file(fasttree_path).exists() ? path(fasttree_path) : "$projectDir/CITATIONS.md"
+
+    rapidnj_path   = params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh"
+    rapidnj_file  = file(rapidnj_path).exists() ? path(rapidnj_path) : "$projectDir/CODE_OF_CONDUCT.md"
+
+    quicksnp_path  = params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk"
+    quicksnp_file  = file(quicksnp_path).exists() ? path(quicksnp_path) : "$projectDir/CONTRIBUTING.md"
+
+    snpmat_path    = params.outdir+"/combined/snpdists/combined.tsv"
+    snpmat_file  = file(snpmat_path).exists() ? path(snpmat_path) : "$projectDir/DISCLAIMER.md"
+
+    snpeff_path    = params.outdir+"/combined/snpeff/combined.csv"
+    snpeff_file  = file(snpeff_path).exists() ? path(snpeff_path) : "$projectDir/README.md"
+
+    waphl_report_files = tuple(qc_report_file, fasttree_file, rapidnj_file, quicksnp_file, snpmat_file, snpeff_file)
 
     MAKE_REPORT (
-        waphl_report_files
+        waphl_report_files,
+        MULTIQC.out.report // this forces the pipeline to wait till the end
     )
 
 /*

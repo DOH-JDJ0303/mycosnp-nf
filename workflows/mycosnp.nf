@@ -395,12 +395,12 @@ workflow MYCOSNP {
     //
 
     // Create paths to the output files included in the report. This was easier than hunting down their outputs from previous processes/subworkflows.
-    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt")
-    fasttree_path = params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh")
-    rapidnj_path = params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh")
-    quicksnp_path = params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk")
-    snpmat_path = params.outdir+"/combined/snpdists/combined.tsv")
-    snpeff_path = params.outdir+"/combined/snpeff/combined.csv")
+    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt"
+    fasttree_path = params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh"
+    rapidnj_path = params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh"
+    quicksnp_path = params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk"
+    snpmat_path = params.outdir+"/combined/snpdists/combined.tsv"
+    snpeff_path = params.outdir+"/combined/snpeff/combined.csv"
 
     MAKE_REPORT (
         qc_report_path,

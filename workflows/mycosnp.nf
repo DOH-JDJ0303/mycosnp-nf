@@ -395,23 +395,23 @@ workflow MYCOSNP {
     //
 
     // Create paths to the output files included in the report. This was easier than hunting down their outputs from previous processes/subworkflows.
-    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt"
-    qc_report_file = file(qc_report_path).exists() ? path(qc_report_path) : "$projectDir/CHANGELOG.md"
+    qc_report_path = file(params.outdir+"/stats/qc_report/qc_report.txt")
+    qc_report_file = qc_report_path.exists() ? qc_report_path : "$projectDir/CHANGELOG.md"
 
-    fasttree_path  = params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh"
-    fasttree_file = file(fasttree_path).exists() ? path(fasttree_path) : "$projectDir/CITATIONS.md"
+    fasttree_path  = file(params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh")
+    fasttree_file  = fasttree_path.exists() ? fasttree_path : "$projectDir/CITATIONS.md"
 
-    rapidnj_path   = params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh"
-    rapidnj_file  = file(rapidnj_path).exists() ? path(rapidnj_path) : "$projectDir/CODE_OF_CONDUCT.md"
+    rapidnj_path   = file(params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh")
+    rapidnj_file   = rapidnj_path.exists() ? rapidnj_path : "$projectDir/CODE_OF_CONDUCT.md"
 
-    quicksnp_path  = params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk"
-    quicksnp_file  = file(quicksnp_path).exists() ? path(quicksnp_path) : "$projectDir/CONTRIBUTING.md"
+    quicksnp_path  = file(params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk")
+    quicksnp_file  = quicksnp_path.exists() ? quicksnp_path : "$projectDir/CONTRIBUTING.md"
 
-    snpmat_path    = params.outdir+"/combined/snpdists/combined.tsv"
-    snpmat_file  = file(snpmat_path).exists() ? path(snpmat_path) : "$projectDir/DISCLAIMER.md"
+    snpmat_path    = file(params.outdir+"/combined/snpdists/combined.tsv")
+    snpmat_file    = snpmat_path.exists() ? snpmat_path : "$projectDir/DISCLAIMER.md"
 
-    snpeff_path    = params.outdir+"/combined/snpeff/combined.csv"
-    snpeff_file  = file(snpeff_path).exists() ? path(snpeff_path) : "$projectDir/README.md"
+    snpeff_path    = file(params.outdir+"/combined/snpeff/combined.csv")
+    snpeff_file    = snpeff_path.exists() ? snpeff_path : "$projectDir/README.md"
 
     waphl_report_files = tuple(qc_report_file, fasttree_file, rapidnj_file, quicksnp_file, snpmat_file, snpeff_file)
 

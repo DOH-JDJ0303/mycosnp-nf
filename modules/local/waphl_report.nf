@@ -2,14 +2,7 @@ process MAKE_REPORT {
     container 'docker pull jdj0303/waphl-mycosnp-report:1.0'
 
     input:
-    path  qc_report,        optional: true
-    path  fasttree,         optional: true
-    path  rapidnj,          optional: true
-    path  quicksnp,         optional: true
-    path  tree_files,       optional: true
-    path  snp_matrix,       optional: true
-    path  snpeff_report,    optional: true
-    val   multiqc_version // This forces the pipeline to run this stage last
+    tuple path(qc_report), path(fasttree), path(rapidnj), path(quicksnp), path(tree_files), path(snp_matrix), path(snpeff_report)
 
     output:
     path "waphl-mycosnp-report.pdf"

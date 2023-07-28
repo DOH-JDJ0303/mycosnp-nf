@@ -402,7 +402,7 @@ workflow MYCOSNP {
     snpmat_path = params.outdir+"/combined/snpdists/combined.tsv")
     snpeff_path = params.outdir+"/combined/snpeff/combined.csv")
 
-    MAKE_REPORT(
+    MAKE_REPORT (
         qc_report_path,
         fasttree_path,
         rapidnj_path,

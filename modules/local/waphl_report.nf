@@ -1,5 +1,5 @@
 process WAPHL_REPORT {
-    container 'jdj0303/waphl-mycosnp-report:1.0'
+    container 'jdj0303/waphl-mycosnp-report:1.01'
 
     input:
     tuple path(qc_report), path(fasttree), path(rapidnj), path(quicksnp), path(snp_matrix), path(snpeff_report)

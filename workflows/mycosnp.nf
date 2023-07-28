@@ -124,6 +124,7 @@ include { GATK4_COMBINEGVCFS          } from '../modules/nf-core/modules/gatk4/c
 include { SEQKIT_REPLACE              } from '../modules/nf-core/modules/seqkit/replace/main'
 include { SNPDISTS                    } from '../modules/nf-core/modules/snpdists/main'
 include { GATK4_LOCALCOMBINEGVCFS     } from '../modules/local/gatk4_localcombinegvcfs.nf'
+include { MAKE_REPORT                 } from '../modules/local/waphl_report.nf'
 
 /*
 ========================================================================================
@@ -387,6 +388,29 @@ workflow MYCOSNP {
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
+
+    //
+    // MODULE: WAPHL Report
+    //
+
+    // Create paths to the output files included in the report. This was easier than hunting down their outputs from previous processes/subworkflows.
+    qc_report_path = params.outdir.resolve("stats/qc_report/qc_report.txt")
+    fasttree_path = params.outdir.resolve("combined/phylogeny/fasttree/fasttree_phylogeny.nh")
+    rapidnj_path = params.outdir.resolve("combined/phylogeny/rapidnj/rapidnj_phylogeny.nh")
+    quicksnp_path = params.outdir.resolve("combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk")
+    snpmat_path = params.outdir.resolve("combined/snpdists/combined.tsv")
+    snpeff_path = params.outdir.resolve("combined/snpeff/combined.csv")
+
+    MAKE_REPORT(
+        qc_report_path,
+        fasttree_path,
+        rapidnj_path,
+        quicksnp_path,
+        snpmat_path,
+        snpeff_path,
+        MULTIQC.out.versions // this forces the pipeline to run this last
+    )
 
 /*
 ========================================================================================

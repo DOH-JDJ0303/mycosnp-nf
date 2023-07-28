@@ -124,7 +124,7 @@ include { GATK4_COMBINEGVCFS          } from '../modules/nf-core/modules/gatk4/c
 include { SEQKIT_REPLACE              } from '../modules/nf-core/modules/seqkit/replace/main'
 include { SNPDISTS                    } from '../modules/nf-core/modules/snpdists/main'
 include { GATK4_LOCALCOMBINEGVCFS     } from '../modules/local/gatk4_localcombinegvcfs.nf'
-include { MAKE_REPORT                 } from '../modules/local/waphl_report.nf'
+include { WAPHL_REPORT                 } from '../modules/local/waphl_report.nf'
 
 /*
 ========================================================================================
@@ -415,7 +415,7 @@ workflow MYCOSNP {
 
     waphl_report_files = tuple(qc_report_file, fasttree_file, rapidnj_file, quicksnp_file, snpmat_file, snpeff_file)
 
-    MAKE_REPORT (
+    WAPHL_REPORT (
         waphl_report_files,
         MULTIQC.out.report // this forces the pipeline to wait till the end
     )

@@ -1,4 +1,4 @@
-process MAKE_REPORT {
+process WAPHL_REPORT {
     container 'jdj0303/waphl-mycosnp-report:1.0'
 
     input:

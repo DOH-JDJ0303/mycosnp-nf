@@ -13,6 +13,6 @@ process WAPHL_REPORT {
 
     script:
     """
-    bash waphl-mycosnp-report.sh
+    waphl-mycosnp-report.sh
     """
 }

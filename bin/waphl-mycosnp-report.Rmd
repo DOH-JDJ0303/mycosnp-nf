@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 ---
 title: "MycoSNP Report"
 output:

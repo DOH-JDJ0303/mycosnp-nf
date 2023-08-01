@@ -46,3 +46,5 @@ reports:
     display: "VCF to FASTA (Combined)"
   "**/combined/snpeff/*":
     display: "SnpEff Results (Combined)"
+  "**/waphl-report/*":
+    display: "WAPHL Report"

@@ -395,8 +395,8 @@ workflow MYCOSNP {
     //
 
     // Create paths to the output files included in the report. This was easier than hunting down their outputs from previous processes/subworkflows.
-    qc_report_path = file(params.outdir+"/stats/qc_report/qc_report.txt")
-    qc_report_file = qc_report_path.exists() ? qc_report_path : "$projectDir/CHANGELOG.md"
+    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt"
+    qc_report_file = file(qc_report_path).exists() ? path(qc_report_path) : "$projectDir/CHANGELOG.md"
 
     fasttree_path  = file(params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh")
     fasttree_file  = fasttree_path.exists() ? fasttree_path : "$projectDir/CITATIONS.md"
@@ -413,11 +413,19 @@ workflow MYCOSNP {
     snpeff_path    = file(params.outdir+"/combined/snpeff/combined.csv")
     snpeff_file    = snpeff_path.exists() ? snpeff_path : "$projectDir/README.md"
 
-    waphl_report_files = tuple(qc_report_file, fasttree_file, rapidnj_file, quicksnp_file, snpmat_file, snpeff_file)
+    // Combine everything into a tuple
+    waphl_report_input = tuple(qc_report_file, fasttree_file, rapidnj_file, quicksnp_file, snpmat_file, snpeff_file)
+
+    // create path to report assets - this would be better as a param - maybe update in future 
+    waphl_report_assets = file("$projectDir/assets/waphl-report/")
+
+    // create tuple that contains the values of essential report files - this forces the process to wait
+    waphl_report_wait = tuple(QC_REPORTSHEET.out.qc_reportsheet, CREATE_PHYLOGENY.out.fasttree_tree, SNPEFF.out.csv)
 
     WAPHL_REPORT (
-        waphl_report_files,
-        MULTIQC.out.report // this forces the pipeline to wait till the end
+        waphl_report_input,
+        waphl_report_assets,
+        waphl_report_wait
     )
 
 /*

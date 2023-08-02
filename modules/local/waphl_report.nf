@@ -3,9 +3,10 @@ process WAPHL_REPORT {
     stageInMode 'copy'
 
     input:
-    tuple path(qc_report), path(fasttree), path(rapidnj), path(quicksnp), path(snp_matrix), path(snpeff_report)
+    tuple path(qc_report), path(quicksnp), path(snp_matrix), path(snpeff_report)
+    path fasttree
+    path rapidnj
     path waphl_report_files
-    tuple val(qc_report_val), val(fasttree_val), val(snpeff_val)
 
     output:
     path "*_waphl-mycosnp-report.*"

@@ -72,6 +72,14 @@ display_qc <- function(qc_file){
              -"Unpaired Reads After Trimming")
     # simply column names
     colnames(df) <- str_remove_all(colnames(df), pattern = " After Trimming")
+
+    # determine QC status
+    df <- df %>%
+      mutate(gc_per = as.numeric(str_remove_all(GC, pattern = "%"))) %>%
+      mutate("Quality Status" = case_when(gc_per < 42 | gc_per > 47.5 | `Average Q Score` < 28 | `Mean Coverage Depth` < 20 ~ "FAIL",
+                                          TRUE ~ "PASS")) %>%
+      select(-gc_per)
+
     # report table
     df %>%
       kable(booktabs=T) %>%

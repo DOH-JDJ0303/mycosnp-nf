@@ -394,36 +394,29 @@ workflow MYCOSNP {
     // MODULE: WAPHL Report
     //
 
-    // Create paths to the publsuhed files included in the WAPHL report. This avoids issues caused by 'optional inputs'. The SNP matrix is always made and could be supplied as a channel but finishes before the trees, so I included it here instead.
-    qc_report_path = params.outdir+"/stats/qc_report/qc_report.txt"
-    qc_report_file = file(qc_report_path).exists() ? path(qc_report_path) : "$projectDir/CHANGELOG.md"
+    // These outputs must be supplied default files because they are optional
+    QC_REPORTSHEET
+        .out
+        .qc_reportsheet
+        .ifEmpty("$projectDir/CHANGELOG.md")
+        .set{ qc_report_file }
 
-    snpmat_path    = file(params.outdir+"/combined/snpdists/combined.tsv")
-    snpmat_file    = snpmat_path.exists() ? snpmat_path : "$projectDir/DISCLAIMER.md"
-
-    snpeff_path    = file(params.outdir+"/combined/snpeff/combined.csv")
-    snpeff_file    = snpeff_path.exists() ? snpeff_path : "$projectDir/README.md"
-
-    quicksnp_path  = file(params.outdir+"/combined/phylogeny/quicksnp/quicksnp_phylogeny.nwk")
-    quicksnp_file  = quicksnp_path.exists() ? quicksnp_path : "$projectDir/CONTRIBUTING.md"
-
-    // These are supplied as channels to force Nextflow to make the report last. QuickSNP is not included because it is not currently emitted by 'CREATE_PHYLOGENY'. This could cause QuickSNP not to show up in the report.
-    //fasttree_path  = file(params.outdir+"/combined/phylogeny/fasttree/fasttree_phylogeny.nh")
-    //fasttree_file  = fasttree_path.exists() ? fasttree_path : "$projectDir/CITATIONS.md"
-
-    //rapidnj_path   = file(params.outdir+"/combined/phylogeny/rapidnj/rapidnj_phylogeny.nh")
-    //rapidnj_file   = rapidnj_path.exists() ? rapidnj_path : "$projectDir/CODE_OF_CONDUCT.md"
-
-    // Combine published files into a tuple for simplicity
-    published_input = tuple(qc_report_file, quicksnp_file, snpmat_file, snpeff_file)
+    SNPEFF
+        .out
+        .csv_snpeffr
+        .ifEmpty("$projectDir/DISCLAIMER.md")
+        .set{ snpeff_file }
 
     // Create path to report assets - this would be better as a param - maybe update in future 
     waphl_report_assets = file("$projectDir/assets/waphl-report/")
 
+    // Note: The QuickSNP tree is not currently emitted by the CREATE_PHYLOGENY process and was therefore omitted from the report
     WAPHL_REPORT (
-        published_input,
+        qc_report_file,
+        SNPDISTS.out.tsv,
         CREATE_PHYLOGENY.out.fasttree_tree,
         CREATE_PHYLOGENY.out.rapidnj_tree,
+        snpeff_file,
         waphl_report_assets
     )
 

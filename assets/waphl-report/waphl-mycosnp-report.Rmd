@@ -49,8 +49,8 @@ qcreport_file <- "qc_report.txt"
 # VCF quality file
 vcfreport_file <- "vcf-qc-report.txt"
 # tree files
-fasttree_file <- "fasttree_phylogeny.nh"
-rapidnj_file <- "rapidnj_phylogeny.nh"
+fasttree_file <- "fasttree_phylogeny.tre"
+rapidnj_file <- "rapidnj_phylogeny.tre"
 quicksnp_file <- "quicksnp_phylogeny.nwk"
 tree_files <- c(fasttree_file, rapidnj_file, quicksnp_file) # tree file list - used as input for functions
 # snp matrix file
@@ -367,7 +367,7 @@ if(file.exists(snpmat_file)){
 ```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
 # report FSK1 mutations
 if(file.exists(snpeff_file)){
-  snpeff_report(snpeff_file)
+  dev_null <- snpeff_report(snpeff_file)
 }
 ```
 \newpage  

@@ -3,9 +3,11 @@ process WAPHL_REPORT {
     stageInMode 'copy'
 
     input:
-    tuple path(qc_report), path(quicksnp), path(snp_matrix), path(snpeff_report)
+    path qc_report
+    tuple val(meta), path(tsv)
     path fasttree
     path rapidnj
+    path snpeff
     path waphl_report_files
 
     output:

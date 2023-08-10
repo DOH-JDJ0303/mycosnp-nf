@@ -11,9 +11,9 @@ process WAPHL_REPORT {
     path waphl_report_files
 
     output:
-    path "*_waphl-mycosnp-report.*"
-    path "*.csv",                   optional: true
-    path "*.jpg",                   optional: true
+    path "*_waphl-mycosnp-report.*", optional: true
+    path "*.csv",                    optional: true
+    path "*.jpg",                    optional: true
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,7 +27,7 @@ process WAPHL_REPORT {
     # move all files into same pwd
     mv waphl-report/* ./
 
-    # render the report without running pandoc - this does not play well
+    # render the report without running pandoc - this does not play well with Nextflow
     Rscript -e "rmarkdown::render('waphl-mycosnp-report.Rmd', run_pandoc=F, output_format='all')"
 
     # create HTML report - update the html header as needed
@@ -45,7 +45,8 @@ process WAPHL_REPORT {
         --variable theme=bootstrap \
         --mathjax \
         --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' \
-        --include-in-header html-header.html
+        --include-in-header html-header.html \
+        || true # this ensures that figures are still published even if the report fails to assemble
 
     # create PDF report - update the pdf header as needed
     pandoc +RTS -K512m -RTS waphl-mycosnp-report.knit.md \
@@ -58,8 +59,9 @@ process WAPHL_REPORT {
         --pdf-engine pdflatex \
         --variable graphics \
         --variable 'geometry:margin=1in' \
-        --include-in-header pdf-header.html
+        --include-in-header pdf-header.html \
+        || true # this ensures that figures are still published even if the report fails to assemble
 
-    pdflatex ${filename}.tex
+    pdflatex ${filename}.tex || true # this ensures that figures are still published even if the report fails to assemble
     '''
 }

@@ -48,3 +48,11 @@ reports:
     display: "SnpEff Results (Combined)"
   "**/waphl-report/*":
     display: "WAPHL Report"
+  "**/samples/**/taxonomy/*":
+    display: "GAMBIT results (Per Sample)"
+  "**/samples/**/subtype/*":
+    display: "Subtype results (Per Sample)"
+  "**/samples/**/assembly/*":
+    display: "Assembly (Per Sample)"
+  "**/combined/pre-mycosnp_summary/*":
+    display: "Pre-MycoSNP Summary (Combined)"

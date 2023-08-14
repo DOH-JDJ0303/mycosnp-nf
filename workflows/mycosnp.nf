@@ -395,17 +395,8 @@ workflow MYCOSNP {
     //
 
     // These outputs must be supplied default files because they are optional
-    QC_REPORTSHEET
-        .out
-        .qc_reportsheet
-        .ifEmpty("$projectDir/CHANGELOG.md")
-        .set{ qc_report_file }
-
-    SNPEFF
-        .out
-        .csv_snpeffr
-        .ifEmpty("$projectDir/DISCLAIMER.md")
-        .set{ snpeff_file }
+    qc_report_file = QC_REPORTSHEET.out.qc_reportsheet.ifEmpty([])
+    snpeff_file = params.snpeff != false ? SNPEFF_BUILD.out.csv_snpeffr : []
 
     // Create path to report assets - this would be better as a param - maybe update in future 
     waphl_report_assets = file("$projectDir/assets/waphl-report/")

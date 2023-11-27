@@ -146,6 +146,13 @@ workflow PRE_MYCOSNP_WF {
         ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     }
 
+    // Copy reads to bucket for NCBI upload
+    if(params.ncbi_bucket){
+        println("Copying reads to bucket for NCBI uploads:")
+        def ncbi_bucket_path = file(params.ncbi_bucket)
+        INPUT_CHECK.out.reads.map{ meta, reads -> [reads.get(0).copyTo(ncbi_bucket_path.resolve(meta.id+"_R1.fastq.gz")), reads.get(1).copyTo(ncbi_bucket_path.resolve(meta.id+"_R2.fastq.gz"))] }.view()
+    }
+
     //
     // MODULE: Run Pre-FastQC 
     //

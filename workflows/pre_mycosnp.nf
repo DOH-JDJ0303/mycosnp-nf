@@ -85,14 +85,15 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { SRA_FASTQ_SRATOOLS       } from '../subworkflows/local/sra_fastq_sratools'
-include { INPUT_CHECK              } from '../subworkflows/local/input_check'
-include { SEQKIT_PAIR              } from '../modules/nf-core/modules/seqkit/pair/main'
-include { FAQCS                    } from '../modules/nf-core/modules/faqcs/main'
-include { GAMBIT_QUERY             } from '../modules/local/gambit'
-include { SUBTYPE                  } from '../modules/local/subtype'
-include { PRE_MYCOSNP_INDV_SUMMARY } from '../modules/local/pre_mycosnp_indv_summary'
-include { PRE_MYCOSNP_COMB_SUMMARY } from '../modules/local/pre_mycosnp_comb_summary'
+include { SRA_FASTQ_SRATOOLS           } from '../subworkflows/local/sra_fastq_sratools'
+include { INPUT_CHECK                  } from '../subworkflows/local/input_check'
+include { SEQKIT_PAIR                  } from '../modules/nf-core/modules/seqkit/pair/main'
+include { FAQCS                        } from '../modules/nf-core/modules/faqcs/main'
+include { GAMBIT_QUERY                 } from '../modules/local/gambit'
+include { SUBTYPE                      } from '../modules/local/subtype'
+include { PRE_MYCOSNP_INDV_SUMMARY     } from '../modules/local/pre_mycosnp_indv_summary'
+include { PRE_MYCOSNP_COMB_SUMMARY     } from '../modules/local/pre_mycosnp_comb_summary'
+include { PRE_MYCOSNP_NEW_SAMPLESHEETS } from '../modules/local/pre_mycosnp_new_samplesheets'
 /*
 ========================================================================================
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
@@ -240,6 +241,23 @@ workflow PRE_MYCOSNP_WF {
     //
     PRE_MYCOSNP_COMB_SUMMARY(
         PRE_MYCOSNP_INDV_SUMMARY.out.result.map{ meta, result -> [result] }.collect()
+    )
+
+    //
+    // MODULE: Make new samples sheets by species and subtype for samples that passed all QC
+    //
+    PRE_MYCOSNP_COMB_SUMMARY
+        .out
+        .summary
+        .splitCsv(header: true)
+        .filter{ it.QC_Status == "PASS" }
+        .map{ tuple(it.Sample, it.QC_Status, it.Predicted_Taxa, it.Predicted_Subtype) }
+        .groupTuple(by: [2,3])
+        .set{ sample_groups }
+        
+    PRE_MYCOSNP_NEW_SAMPLESHEETS (
+        sample_groups,
+        params.input
     )
 
     CUSTOM_DUMPSOFTWAREVERSIONS (

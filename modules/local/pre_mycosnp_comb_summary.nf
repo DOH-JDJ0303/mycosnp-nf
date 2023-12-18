@@ -7,7 +7,7 @@ process PRE_MYCOSNP_COMB_SUMMARY {
     path line_summary
 
     output:
-    path "pre-mycosnp-summary.csv"
+    path "pre-mycosnp-summary.csv", emit: summary
 
     when:
     task.ext.when == null || task.ext.when
@@ -15,7 +15,7 @@ process PRE_MYCOSNP_COMB_SUMMARY {
     script:
     """
     # combine all line summaries into single report
-    echo "Sample,Trimmed_Reads,Avg_Read_Quality,Avg_Depth_Coverage,Sample_Genome_Length,Reference_Genome_Length,Sample_GC,Reference_GC,Predicted_Taxa,Predicted_Subtype,Subtype_ANI,Reference_Accession" > pre-mycosnp-summary.csv
+    echo "Sample,QC_Status,QC_Reason,Trimmed_Reads,Avg_Read_Quality,Avg_Depth_Coverage,Sample_Genome_Length,Reference_Genome_Length,Sample_GC,Reference_GC,Predicted_Taxa,Predicted_Subtype,Subtype_ANI,Reference_Accession" > pre-mycosnp-summary.csv
     cat *_linesummary.csv >> pre-mycosnp-summary.csv 
     """
 }

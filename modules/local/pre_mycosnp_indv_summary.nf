@@ -36,8 +36,14 @@ process PRE_MYCOSNP_INDV_SUMMARY {
         ${prefix} \\
         ${assembly} \\
         ref.fa \\
-        *.stats.txt \\
-        *.for_qual_histogram.txt \\
+        ${prefix}.stats.txt \\
+        ${prefix}.for_qual_histogram.txt \\
+        ${params.min_assembly_depth} \\
+        ${params.min_phred} \\
+        ${params.min_gc} \\
+        ${params.max_gc} \\
+        ${params.min_gen_len} \\
+        ${params.max_gen_len} \\
         > stats_cols
 
     # Extract subtype info if available

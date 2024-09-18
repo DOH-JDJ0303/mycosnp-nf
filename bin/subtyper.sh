@@ -37,7 +37,7 @@ fi
 if [ -f "${db}/${sketch_file}" ]
 then
     echo -e "sample,subtype,mash_dist,est_ANI" > ${sample}_subtype.csv
-    mash dist ${db}/${sketch_file} ${seq} | sort -nk 3 | awk -v s=${sample} 'BEGIN {OFS = ","} NR==1 {print s,$1,$3,100*(1-$3)}' >> ${sample}_subtype.csv
+    mash dist ${db}/${sketch_file} ${seq} | sort -gk 3 | awk -v s=${sample} 'BEGIN {OFS = ","} NR==1 {print s,$1,$3,100*(1-$3)}' >> ${sample}_subtype.csv
 else
     echo -e "Error: Sketch file for ${species} not found."
 fi

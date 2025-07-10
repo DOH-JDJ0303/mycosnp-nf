@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+
+# fungalAMR
+# Author: Jared Johnson, jared.johnson@doh.wa.gov
+
+import argparse
+import logging
+import subprocess
+import sys
+import textwrap
+import os
+import json
+import random
+import gzip
+from cyvcf2 import VCF, Writer
+import shutil
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+def checkReqs(tools):
+    for tool in tools:
+        if shutil.which(tool) is None:
+            logging.error(f"Required software '{tool}' not found in PATH.")
+            sys.exit(1)
+
+def annotateVcf(vcf, fa, gff, outdir, log_dir):
+    vcf_out = os.path.join(outdir, 'db.anno.vcf')
+    stderr_log = os.path.join(log_dir, "bcftools_csq.log")
+    logging.info("Annotating variants with bcftools csq")
+
+    with open(vcf_out, 'w') as out, open(stderr_log, 'w') as err:
+        subprocess.run([
+            'bcftools', 'csq', '-p', 's', '-f', fa, '-g', gff, vcf
+        ], stdout=out, stderr=err, check=True)
+
+    return vcf_out
+
+def filterVcf(input, outdir, qual=100, dp=10):
+    vcf_filt = os.path.join(outdir, "db.filt.vcf")
+    vcf_in = VCF(input)
+    vcf_out = Writer(vcf_filt, vcf_in)
+    muts = [['gene','impact','mutation_prot','mutation_dna','quality','dp','reference']]
+
+    logging.info(f"Filtering variants with QUAL>{qual} and DP>{dp}")
+    for variant in vcf_in:
+
+        ref = variant.CHROM
+        v_qual = variant.QUAL
+        v_dp = variant.INFO.get("DP")
+        bcsq = variant.INFO.get('BCSQ')
+
+        if (v_qual is not None and v_qual > qual) and (v_dp and v_dp > dp) and bcsq is not None:
+            vcf_out.write_record(variant)
+            bcsq = bcsq.split('|')
+            mut_line = [str(bcsq[i]) for i in [1,0,5,6]] + [str(v_qual), str(v_dp), str(ref)]
+            muts.append(mut_line)
+
+    vcf_out.close()
+    mut_file = os.path.join(outdir, "mutations.csv")
+    with open(mut_file, 'w') as f:
+        f.write('\n'.join([','.join(i) for i in muts]))
+    
+    return vcf_filt
+
+def callVars(fa, bam, outdir, log_dir):
+    vcf = os.path.join(outdir, "db.vcf")
+    stderr_log = os.path.join(log_dir, "freebayes.log")
+    if os.path.exists(vcf):
+        logging.info('Read calls detected. Skipping this step.')
+        return vcf
+
+    command = [
+        "freebayes", "-f", fa, "--ploidy", "2", "--genotype-qualities",
+        "--report-monomorphic", "--use-best-n-alleles", "2",
+        "--min-coverage", "10", "--min-alternate-fraction", "0.1",
+        "--report-all-haplotype-alleles", "--gvcf", bam
+    ]
+
+    logging.info(f"Running FreeBayes: {' '.join(command)}")
+    with open(vcf, 'w') as out, open(stderr_log, 'w') as err:
+        subprocess.run(command, stdout=out, stderr=err, check=True)
+
+    return vcf
+
+def align2Db(fa, reads, outdir, log_dir):
+    bam_file = os.path.join(outdir, 'db.bam')
+    if os.path.exists(bam_file):
+        logging.info('Aligned reads detected. Skipping this step.')
+        return bam_file    
+
+    logging.info('Aligning reads to the reference with BWA')
+    bwa_log = os.path.join(log_dir, "bwa_index.log")
+    align_log = os.path.join(log_dir, "bwa_mem.log")
+
+    with open(bwa_log, 'w') as err:
+        subprocess.run(["bwa", "index", fa], stdout=subprocess.DEVNULL, stderr=err, check=True)
+
+    cmd = f"bwa mem {fa} {' '.join(reads)} | samtools view -b -F 4 - | samtools sort -o {bam_file}"
+    with open(align_log, 'w') as err:
+        subprocess.run(cmd, shell=True, stderr=err, check=True)
+
+    return bam_file
+
+def sampleReads(reads, outdir, max_reads=1000000, seed=42):
+    """
+    Downsample paired-end FASTQ reads to a specific number of total reads using seqtk.
+    """
+    r1_out = os.path.join(outdir,'sampled_R1.fastq.gz')
+    r2_out = os.path.join(outdir,'sampled_R2.fastq.gz')
+
+    if os.path.exists(r1_out):
+        logging.info('Sampled reads detected. Skipping this step.')
+        return [r1_out, r2_out]
+
+    logging.info(f'Downsampling to {max_reads} reads (if needed)')
+    r1, r2 = reads
+
+    cmd_r1 = [
+        "seqtk", "sample", "-s", str(seed), r1, str(max_reads)
+    ]
+    cmd_r2 = [
+        "seqtk", "sample", "-s", str(seed), r2, str(max_reads)
+    ]
+
+    with gzip.open(r1_out, "wt") as out1, \
+         gzip.open(r2_out, "wt") as out2:
+        subprocess.run(cmd_r1, stdout=out1, check=True)
+        subprocess.run(cmd_r2, stdout=out2, check=True)
+
+    return [r1_out, r2_out]
+
+
+def loadDb(json_file):
+    """
+    Loads AMR gene database from JSON.
+    """
+    with open(json_file, 'r') as f:
+        return json.load(f)
+
+def db2Gff(db, outdir):
+    """
+    Converts database JSON to a reference GFF3 file.
+    Outputs a bgzipped and tabix-indexed GFF file.
+    """
+    gff_file = os.path.join(outdir, 'db.gff')
+    gff_gz = gff_file + '.gz'
+
+    gff_data = ["##gff-version 3"]
+    for target in db:
+        acc = target['accession']
+        for gene in target['annotation']:
+            gene_name = gene['gene']
+            transcript_name = gene_name + "T1"
+            gff_data.append('\t'.join([acc, '.', 'gene',
+                                       str(gene['coords'][0]), str(gene['coords'][1]),
+                                       '.', gene['strand'], '.',
+                                       f'ID=gene:{gene_name};biotype=protein_coding']))
+            gff_data.append('\t'.join([acc, '.', 'mRNA',
+                                       str(gene['coords'][0]), str(gene['coords'][1]),
+                                       '.', gene['strand'], '.',
+                                       f'ID=transcript:{transcript_name};Parent=gene:{gene_name};biotype=protein_coding']))
+            for exon in gene.get('exons', []):
+                gff_data.append('\t'.join([acc, '.', 'exon',
+                                           str(exon['coords'][0]), str(exon['coords'][1]),
+                                           '.', gene['strand'], '.',
+                                           f'Parent=transcript:{transcript_name}']))
+            for cds in gene.get('cds', []):
+                gff_data.append('\t'.join([acc, '.', 'CDS',
+                                           str(cds['coords'][0]), str(cds['coords'][1]),
+                                           '.', gene['strand'], str(cds['phase']),
+                                           f'Parent=transcript:{transcript_name}']))
+
+    # Write uncompressed GFF
+    with open(gff_file, 'w') as f:
+        f.write('\n'.join(gff_data) + '\n')
+
+    # Compress with bgzip
+    subprocess.run(['bgzip', '-f', gff_file], check=True)
+
+    # Index with tabix
+    subprocess.run(['tabix', '-p', 'gff', gff_gz], check=True)
+
+    return gff_gz
+
+def db2Fa(db, outdir):
+    """
+    Converts database JSON to a reference FASTA file.
+    """
+    fa_data = []
+    fa_file = os.path.join(outdir, 'db.fa')
+    for target in db:
+        fa_data.append(f">{target['accession']}\n{target['sequence']}")
+    with open(fa_file, 'w') as f:
+        f.write('\n'.join(fa_data))
+    # Index with Samtools
+    subprocess.run(['samtools', 'faidx', fa_file], check=True)
+    return fa_file
+
+
+def main():
+    """
+    Main function: parses arguments, runs alignment, and calls variants.
+    """
+    version = "1.0"
+
+    parser = argparse.ArgumentParser(description="Align reads to an AMR gene database and call variants.")
+    parser.add_argument("--db", required=True, help="Path to AMR gene database (JSON format)")
+    parser.add_argument("--r1", required=True, help="Path to first read file (.fastq.gz)")
+    parser.add_argument("--r2", required=True, help="Path to second read file (.fastq.gz)")
+    parser.add_argument("--outdir", default="results", help="Output directory (default: results)")
+    parser.add_argument("--qual", type=float, default=100, help="Minimum QUAL score for variants (default: 100)")
+    parser.add_argument("--dp", type=int, default=10, help="Minimum depth (DP) for variants (default: 10)")
+    parser.add_argument("--max_reads", type=int, default=1000000, help="Maximum number of reads to sample (default: 1,000,000)")
+    parser.add_argument('--version', action='version', version=f'%(prog)s {version}')
+    args = parser.parse_args()
+
+    print(textwrap.dedent(f""" 
+        fungalAMR v{version}
+        -----------------------------
+    """), flush=True)
+
+    checkReqs(["freebayes", "bcftools", "bwa", "samtools", "tabix", "bgzip", "seqtk"])
+
+    outdir = args.outdir
+    os.makedirs(outdir, exist_ok=True)
+
+    log_dir = os.path.join(outdir, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+
+    db = loadDb(args.db)
+    db_fa = db2Fa(db, outdir)
+    db_gff = db2Gff(db, outdir)
+    reads = sampleReads([args.r1, args.r2], outdir, max_reads=args.max_reads)
+    db_bam = align2Db(db_fa, reads, outdir, log_dir)
+    vcf = callVars(db_fa, db_bam, outdir, log_dir)
+    vcf_anno = annotateVcf(vcf, db_fa, db_gff, outdir, log_dir)
+    vcf_filt = filterVcf(vcf_anno, outdir, qual=args.qual, dp=args.dp)
+
+    
+
+if __name__ == "__main__":
+    main()

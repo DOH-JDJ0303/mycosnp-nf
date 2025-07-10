@@ -91,6 +91,7 @@ include { SEQKIT_PAIR              } from '../modules/nf-core/modules/seqkit/pai
 include { FAQCS                    } from '../modules/nf-core/modules/faqcs/main'
 include { GAMBIT_QUERY             } from '../modules/local/gambit'
 include { SUBTYPE                  } from '../modules/local/subtype'
+include { FUNGALAMR                } from '../modules/local/fungalamr'
 include { PRE_MYCOSNP_INDV_SUMMARY } from '../modules/local/pre_mycosnp_indv_summary'
 include { PRE_MYCOSNP_COMB_SUMMARY } from '../modules/local/pre_mycosnp_comb_summary'
 /*
@@ -206,6 +207,13 @@ workflow PRE_MYCOSNP_WF {
     SUBTYPE(
         ch_gambit_assembly,
         params.subtype_db
+    )
+    ch_versions = ch_versions.mix(SUBTYPE.out.versions.first())
+
+    // Define path to subtyper files
+    FUNGALAMR(
+        FAQCS.out.reads,
+        params.amr_db
     )
     ch_versions = ch_versions.mix(SUBTYPE.out.versions.first())
 

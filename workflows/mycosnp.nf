@@ -124,7 +124,7 @@ include { GATK4_COMBINEGVCFS          } from '../modules/nf-core/modules/gatk4/c
 include { SEQKIT_REPLACE              } from '../modules/nf-core/modules/seqkit/replace/main'
 include { SNPDISTS                    } from '../modules/nf-core/modules/snpdists/main'
 include { GATK4_LOCALCOMBINEGVCFS     } from '../modules/local/gatk4_localcombinegvcfs.nf'
-include { WAPHL_REPORT                 } from '../modules/local/waphl_report.nf'
+// include { WAPHL_REPORT                 } from '../modules/local/waphl_report.nf'
 
 /*
 ========================================================================================
@@ -399,17 +399,17 @@ workflow MYCOSNP {
     snpeff_file = params.snpeff != false ? SNPEFF_BUILD.out.csv_snpeffr : []
 
     // Create path to report assets - this would be better as a param - maybe update in future 
-    waphl_report_assets = file("$projectDir/assets/waphl-report/")
+    // waphl_report_assets = file("$projectDir/assets/waphl-report/")
 
     // Note: The QuickSNP tree is not currently emitted by the CREATE_PHYLOGENY process and was therefore omitted from the report
-    WAPHL_REPORT (
-        qc_report_file,
-        SNPDISTS.out.tsv,
-        CREATE_PHYLOGENY.out.fasttree_tree,
-        CREATE_PHYLOGENY.out.rapidnj_tree,
-        snpeff_file,
-        waphl_report_assets
-    )
+    // WAPHL_REPORT (
+    //    qc_report_file,
+    //    SNPDISTS.out.tsv,
+    //    CREATE_PHYLOGENY.out.fasttree_tree,
+    //    CREATE_PHYLOGENY.out.rapidnj_tree,
+    //    snpeff_file,
+    //    waphl_report_assets
+    //)
 
 /*
 ========================================================================================
